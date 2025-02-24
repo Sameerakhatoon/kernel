@@ -81,8 +81,8 @@ ata_lba_read:
     ; Output: Sectors are loaded into memory at the specified address
     mov ebx, eax     ; Copy LBA to EBX
     ; send highest 8 bits of LBA to port 0x1F6 or the controller
-    shr ebx, 24     ; Shift right by 24 bits to get the highest 8 bits
-    or ebx, 0xE0    ; Set the drive number (0xE0 = master, 0xF0 = slave)
+    shr eax, 24     ; Shift right by 24 bits to get the highest 8 bits
+    or eax, 0xE0    ; Set the drive number (0xE0 = master, 0xF0 = slave)
     mov dx, 0x1F6   ; I/O port for the ATA controller
     out dx, al      ; Send the highest 8 bits of LBA to the controller
     ; send total number of sectors to read to port 0x1F2

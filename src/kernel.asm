@@ -1,7 +1,7 @@
 [BITS 32]          ; This tells the assembler that we're writing 32-bit code.
 
 global _start      ; Declare _start as a global symbol so the linker can find it.
-
+extern main_kernel ; Declare start_kernel as an external symbol.
 ; Define segment selectors (used to access memory in protected mode)
 CODE_SEG equ 0x08  ; Code segment selector (standard in 32-bit protected mode)
 DATA_SEG equ 0x10  ; Data segment selector (for accessing data in memory)
@@ -31,5 +31,7 @@ _start:
 
     ; --- Entering an infinite loop ---
     ; This keeps the processor in an idle state, preventing it from executing garbage instructions.
-    
+    call main_kernel  ; Call the start_kernel function from the C code.
     jmp $         ; Infinite loop (jmp to itself, so the CPU never moves forward).
+
+times 512 - ($ - $$) db 0  ; Fill the rest of the sector with zeros to make it 512 bytes long.
