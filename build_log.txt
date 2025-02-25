@@ -1,0 +1,7 @@
+mkdir -p bin
+i686-elf-ld -g -relocatable build/kernel.asm.o build/kernel.o build/serial.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o -o build/kernelfull.o
+i686-elf-gcc -T src/linker.ld -o bin/kernel.bin -ffreestanding -O0 -nostdlib build/kernelfull.o
+/home/azureuser_linux-1/opt/cross/lib/gcc/i686-elf/10.2.0/../../../../i686-elf/bin/ld: build/kernelfull.o: in function `main_kernel':
+/home/azureuser_linux-1/os/os/src/kernel.c:13: undefined reference to `problem'
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:96: bin/kernel.bin] Error 1

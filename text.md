@@ -390,3 +390,98 @@ SECTIONS {
         *(.bss)         ; Include all .bss sections
     }
 }
+
+What is text mode?
+TEXT MODE ALLOWS YOU TO WRITE ASCII TO VIDEO MEMORY
+TEXT MODE SUPPORTS 16 UNIQUE COLOURS
+NO NEED TO SET INDIVIDUAL SCREEN PIXELS FOR PRINTING CHARACTERS
+
+Text mode allows you to write ascii to video memory
+• You write ASCII characters into memory starting at address 0xB8000 for coloured displays
+• Or for monochrome displays address OxB0000
+• Each ascii character written to this memory has its pixel equivalent outputted to the monitor.
+
+Each character takes up two bytes
+• Byte 0 = ascii character e.g 'A'
+• Byte 1 = Colour code
+
+
+INTERRUPT DESCRIPTOR TABLE 
+- DESCRIBES HOW INTERRUPTS ARE INVOKED IN PROTECTED MODE
+- CAN BE MAPPED ANYWHERE IN MEMORY
+- DIFFERENT FROM THE INTERRUPT VECTOR TABLE
+- Array of Interrupt descriptors
+
+https://chatgpt.com/share/67bc8599-d0e8-8002-bf29-3bc828cd3e40
+
+Interrupt Descriptor Structure
+struct idt_desc
+{
+uint16_t offset_1; // offset bits 0..15
+uint16_t selector; // a code segment selector in GDT or LDT
+uint8_t zero;
+// unused, set to 0
+uint8_t type_attr; // type and attributes, see below
+uint16_t offset_23; // offset bits 16..31
+} _attribute__((packed));
+
+struct idtr_desc
+{
+uint16_t limit;
+uint32_t base;
+} _attribute__((packed));
+
+Loading interrupt descriptor table
+idt_load:
+push ebp
+mov ebp, esp
+mov ebx, [ebp+8]
+lidt [ebx] ; pointer to idtr
+pop ebp
+ret
+
+
+Final Notes
+• Interrupt Descriptor Table can be defined where we like in memory
+• Interrupt Descriptor Tables are Setup differently than the interrupt vector table.
+• During an interrupt certain properties can be pushed to the stack. The rules involved with this are quite complicated so we will discuss them as they come and they do not always apply.
+
+https://chatgpt.com/share/67bc8599-d0e8-8002-bf29-3bc828cd3e40
+
+https://wiki.osdev.org/Interrupt_Descriptor_Table
+
+https://c9x.me/x86/html/file_module_x86_id_139.html
+
+ESP (Stack Pointer) and EBP (Base Pointer) are key registers used to manage function calls and stack frames
+
+ESP stands for Extended Stack Pointer.
+It points to the top of the stack, where the most recent data is stored.
+It changes dynamically when data is pushed or popped.
+
+EBP stands for Extended Base Pointer.
+It remains constant during a function call, unlike ESP, which moves.
+It helps access function parameters and local variables.
+
+How EBP is Used
+The function saves the old base pointer (push ebp).
+It sets up a new base pointer (mov ebp, esp).
+Function arguments and local variables are accessed using EBP.
+
+When a function is called:
+
+The return address is pushed onto the stack (by call instruction).
+The previous EBP is saved (push ebp).
+A new stack frame is created (mov ebp, esp).
+
+int add(int a, int b) {
+    return a + b;
+}
+
+add:
+    push ebp        ; Save old EBP
+    mov ebp, esp    ; Set new stack frame
+    mov eax, [ebp+8] ; Load 'a' into EAX
+    add eax, [ebp+12] ; Add 'b' to EAX
+    pop ebp         ; Restore previous stack frame
+    ret             ; Return (uses address in [EBP+4])
+
