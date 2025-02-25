@@ -30,6 +30,16 @@ _start:
     or al, 2      ; Set bit 1 (A20 enable bit) in the AL register.
     out 0x92, al  ; Write the modified value back to port 0x92, enabling the A20 line.
 
+    ; --- Remap the PIC (Programmable Interrupt Controller) ---
+    ; The PIC is used to manage hardware interrupts. We need to remap it to avoid conflicts, as the default addresses overlap with CPU exceptions.
+    ; Initialize some flags in the PIC's
+    mov al, 00010001b; 
+    out 0x20, al; Tell master
+    mov al, 0x20; Master IRQO should be on INT 0x20 (Just after intel exceptions)
+    out 0x21, al
+    mov al, 00000001b; 
+    out 0x21, al
+
     ; --- Entering an infinite loop ---
     ; This keeps the processor in an idle state, preventing it from executing garbage instructions.
     call main_kernel  ; Call the start_kernel function from the C code.

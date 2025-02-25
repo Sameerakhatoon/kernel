@@ -13,6 +13,8 @@ void main_kernel() {
     serial_write_string("Hello, Serial!\n");
     init_idt();
     // problem();
-    out_byte(0x60, 0xff);
+    enable_interrupts();
+
+    // out_byte(0x60, 0xff);
 }
 

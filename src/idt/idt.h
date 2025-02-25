@@ -20,4 +20,7 @@ struct IdtRegisterDescriptor {
 
 void init_idt();
 
+void enable_interrupts();
+void disable_interrupts();
+
 #endif

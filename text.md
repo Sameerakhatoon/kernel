@@ -485,3 +485,55 @@ add:
     pop ebp         ; Restore previous stack frame
     ret             ; Return (uses address in [EBP+4])
 
+PROGRAMMABLE INTERRUPT CONTROLLER
+ALLOWS HARDWARE TO INTERRUPT THE PROCESSOR STATE
+PROGRAMMABLE
+REQUIRES INTERRUPT ACKNOWLEDGMENT
+
+Allows Hardware To Interrupt The Processor
+• The programmable interrupt controller allows different types of hardware to interrupt the processor such as the hard disk, keyboard and more..
+
+Understanding IRQ's
+• IRQ's are mapped to a starting interrupt for example lets choose 0x20.
+• IRQ 0 would then be interrupt 0x20
+• IRQ 1 would then be interrupt 0x21
+• IRQ 2 would then be interrupt 0x22
+
+By default some of the IRQ's are mapped to interrupts 8-15 this is a problem as these interrupts are reserved in protected mode for exceptions so we are required to remap the PIC(Programmable Interrupt Controller)
+
+Master Vs Slave
+• The system has two PIC (Programmable Interrupt Controller) one for master ports and the other for slave ports
+• The master handles IRQ 0-7
+• The slave handles IRQ 8-15
+
+Master Vs Slave
+• The system has two PIC (Programmable Interrupt Controller) one for master ports and the other for slave ports
+• The master handles IRQ 0-7
+• The slave handles IRQ 8-15
+
+Remapping the Master PIC
+setup_pic:
+  ; Initialize some flags in the PIC's
+  mov al, 00010001b; b * 4 = 1 Init; b * 3 = 8 Edge; b * 1 = 0 : Cascade; b*theta = 1 : Need 4th init step
+  out 0x20, al; Tell master
+  mov al, 0x20; Master IRQO should be on INT 0x20 (Just after intel exceptions)
+  out 0x21, al
+  mov al, 00000001b; b * 4 = 0 FNM; 63-2-00: Master/Slave set by hardware; b * 1 = 0 Not AEOΙ; b*theta = 1 x86 mode
+  out 0x21, al
+ret
+
+Interrupt Acknowledgment
+• You must let the PIC controller know when you have handled the interrupt
+
+// Let the PIC know we ackowledge the ISR
+outb (PIC1, PIC_EOI); //PIC1 is the base address of the master PIC, PIC_EOI is the end of interrupt command code
+
+// ISR Definitions
+#define PIC1 0x20 /* 10 base address for master PIC */
+#define PIC2 0XA0 /* 10 base address for slave PIC */
+#define PIC1_COMMAND PIC1
+#define PICI_DATA (PIC1+1)
+#define PIC2_COMMAND PIC2
+#define PIC2_DATA (PIC2+1)
+#define PIC_ΕΟΣ 0x20 / End-of-interrupt command code */
+
