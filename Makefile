@@ -14,6 +14,10 @@ IDT_C_SRC := $(SRC_DIR)/idt/idt.c
 MEMORY_C_SRC := $(SRC_DIR)/memory/memory.c
 IO_C_SRC := $(SRC_DIR)/io/io.c
 IO_ASM_SRC := $(SRC_DIR)/io/io.asm
+HEAP_C_SRC := $(SRC_DIR)/memory/heap/heap.c
+HEAP_ASM_SRC := $(SRC_DIR)/memory/heap/heap.asm
+KERNEL_HEAP_C_SRC := $(SRC_DIR)/memory/heap/kernel_heap.c
+KERNEL_HEAP_ASM_SRC := $(SRC_DIR)/memory/heap/kernel_heap.asm
 
 # Object Files
 KERNEL_ASM_OBJ := $(BUILD_DIR)/kernel.asm.o
@@ -27,6 +31,10 @@ IO_ASM_OBJ := $(BUILD_DIR)/io/io.asm.o
 KERNEL_FULL_OBJ := $(BUILD_DIR)/kernelfull.o
 KERNEL_BIN := $(BIN_DIR)/kernel.bin
 OS_BIN := $(BIN_DIR)/os.bin
+HEAP_C_OBJ := $(BUILD_DIR)/memory/heap/heap.o
+HEAP_ASM_OBJ := $(BUILD_DIR)/memory/heap/heap.asm.o
+KERNEL_HEAP_C_OBJ := $(BUILD_DIR)/memory/heap/kernel_heap.o
+KERNEL_HEAP_ASM_OBJ := $(BUILD_DIR)/memory/heap/kernel_heap.asm.o
 
 # Linker Script
 LINKER_SCRIPT := $(SRC_DIR)/linker.ld
@@ -40,11 +48,11 @@ GDB := gdb
 RM := rm -rf
 
 # Compiler Flags
-INCLUDES := -I$(SRC_DIR) -I$(SRC_DIR)/idt -I$(SRC_DIR)/memory -I$(SRC_DIR)/io
+INCLUDES := -I$(SRC_DIR) -I$(SRC_DIR)/idt -I$(SRC_DIR)/memory -I$(SRC_DIR)/io -I$(SRC_DIR)/memory/heap
 FLAGS := -g -ffreestanding -Wall -O0 -nostdlib -nostartfiles -nodefaultlibs
 
 # Files to compile
-FILES := $(KERNEL_ASM_OBJ) $(KERNEL_C_OBJ) $(SERIAL_C_OBJ) $(IDT_ASM_OBJ) $(IDT_C_OBJ) $(MEMORY_C_OBJ) $(IO_ASM_OBJ) # $(IO_C_OBJ) $(IO_ASM_OBJ)
+FILES := $(KERNEL_ASM_OBJ) $(KERNEL_C_OBJ) $(SERIAL_C_OBJ) $(IDT_ASM_OBJ) $(IDT_C_OBJ) $(MEMORY_C_OBJ) $(IO_ASM_OBJ) $(HEAP_C_OBJ) $(KERNEL_HEAP_C_OBJ) # $(IO_C_OBJ) $(HEAP_ASM_OBJ) $(KERNEL_HEAP_ASM_OBJ)
 
 # Default target
 all: $(OS_BIN)
@@ -91,6 +99,23 @@ $(MEMORY_C_OBJ): $(MEMORY_C_SRC)
 	mkdir -p $(BUILD_DIR)/memory
 	$(GCC) $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
 
+$(HEAP_C_OBJ): $(HEAP_C_SRC)
+	mkdir -p $(BUILD_DIR)/memory/heap
+	$(GCC) $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
+
+# $(HEAP_ASM_OBJ): $(KERNEL_HEAP_ASM_SRC)
+# 	mkdir -p $(BUILD_DIR)/memory/heap
+# 	$(NASM) -f elf -g $< -o $@
+
+$(KERNEL_HEAP_C_OBJ): $(KERNEL_HEAP_C_SRC)
+	mkdir -p $(BUILD_DIR)/memory/heap
+	$(GCC) $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
+
+# $(KERNEL_HEAP_ASM_OBJ): $(KERNEL_HEAP_ASM_SRC)
+# 	mkdir -p $(BUILD_DIR)/memory/heap
+# 	$(NASM) -f elf -g $< -o $@
+
+
 # Compile IO C
 # $(IO_C_OBJ): $(IO_C_SRC)
 # 	mkdir -p $(BUILD_DIR)/io
@@ -123,4 +148,4 @@ gdb_debug:
 
 # Clean
 clean:
-	$(RM) $(BIN_DIR)/*.bin $(BUILD_DIR)/*.o $(BUILD_DIR)/idt/*.o $(BUILD_DIR)/memory/*.o $(BUILD_DIR)/io/*.o $(KERNEL_FULL_OBJ)
+	$(RM) $(BIN_DIR)/*.bin $(BUILD_DIR)/*.o $(BUILD_DIR)/idt/*.o $(BUILD_DIR)/memory/*.o $(BUILD_DIR)/io/*.o $(KERNEL_FULL_OBJ) $(BUILD_DIR)/memory/heap/*.o
