@@ -724,3 +724,95 @@ https://wiki.osdev.org/Memory_Map_(x86)#:~:text=is%20not%20standardized.-,Extend
 the kernel is mapped at 0x00100000, so, the heap can be mapped at 0x01000000 https://wiki.osdev.org/Memory_Map_(x86)#:~:text=15%2D16MB%203-,0x01000000,-%3F%3F%3F%3F%3F%3F%3F%3F
 
 need other 25600 bytes to store the entry table, so, the entry table can be mapped at 0x00007E00 to 0x0007FFFF	480.5 KiB, we need 25600/1024 KIBytes, 25KIB  https://wiki.osdev.org/Memory_Map_(x86)#:~:text=0x00007E00,480.5%20KiB
+
+
+What Is Paging?
+PAGING ALLOWS US TO REMAP MEMORY ADDRESSES TO POINT TO OTHER MEMORY ADDRESSES
+CAN BE USED TO PROVIDE THE ILLUSION WE HAVE THE MAXIMUM AMOUNT OF RAM INSTALLED
+CAN BE USED TO HIDE MEMORY FROM OTHER PROCESSES
+
+Remapping Memory
+• Paging allows us to remap one memory address to another, so 0x100000 could point to 0x200000.
+• Paging works in 4096 byte block sizes by default. The blocks are called pages.
+• When paging is enabled the MMU (Memory Management Unit) will look at your allocated page tables to resolve virtual addresses into physical addresses.
+• Paging allows us to pretend memory exists when it does not.
+
+Virtual addresses vs Physical addresses?
+• Virtual addresses are addresses that are not pointing to the address in memory that their value says they are. Virtual address 0x100000 might point to physical address 0x200000 as an example.
+• Physical addresses are absolute addresses in memory whose value points to the same address in memory. For example if physical address 0x100000 points to address 0x100000 then this is a physical address.
+• Essentially virtual address and physical address are just terms we used to explain how a piece of memory is being accessed.
+
+![paging](paging.png)
+
+- page directory is a table of pointers to page tables
+- page table is a table of pointers to physical memory
+- page table entry is a pointer to physical memory
+
+- in the picture above, 1024 entries in page directory, 1024 entries in page table, 1024 entries in page table entry, 4 KB page size
+- so, each table can point to 1024*4 KB = 4 MB of physical memory
+- so, 1024*1024*4 KB = 4 GB of physical memory can be accessed
+
+- first index in page directory points to the first page table, that can point upto 4 MB of physical memory(0x00), next index in page directory points to the next page table, that can point upto 4 MB of physical memory(0x40000), and so on
+
+  - first index in the first page table is a pointer to 4kb of physical memory, next index in the page table is a pointer to the next 4kb of physical memory, and so on
+    - first index being address 0x00000000, next index being address 0x00001000(4096), and so on
+  - first index in the seconde page table is a pointer to 4kb of physical memory, next index in the page table is a pointer to the next 4kb of physical memory, and so on
+    - first index being address 0x00400000, next index being address 0x00401000(4096), and so on
+
+
+
+Page Directory Structure
+• Holds a pointer to a page table
+• Holds attributes
+
+![page_directory](page_directory.png)
+
+- page fault occurs if the page table entry doesn't point to any physical memory
+
+Page Fault Exception
+The CPU will call the page fault interrupt 0x14 when their was a problem with paging.
+The exception is Invoked:
+• if you access a page in memory that does not have its "P (Present)" bit set.
+• Invoked if you access a page that is for supervisor but you are not supervisor.
+• Invoked if you write to a page that is read only and you are not supervisor.
+
+Hiding memory from processes
+• If we give each process its own page directory table then we can map the memory for the process however we want it to be. We can make it so the process can only see its self.
+• Hiding memory can be achieved by switching the page directories when moving between processes.
+  - use assembly code to switch the page directory, and then jump to the process code
+  - if interrupt, switch to kernel page directory, and then jump to the interrupt handler code
+• All processes can access the same virtual memory addresses but they will point to different physical addresses.
+
+Illusion of more memory
+• We can pretend we have the maximum amount of memory even if we do not
+• This is achieved by creating page tables that are not present. Once a process accesses this non-present address a page fault will occur. We can then load the page back into memory and the process had no idea.
+• 100MB system can act as if it has access to the full 4GB on a 32 bit architecture.
+
+Benefits to paging
+• Each process can access the same virtual memory addresses, never writing over each other.
+• Security is an added benefit as we can map out physical memory that we don't want processes to see.
+• Can be used to prevent overwriting of sensitive data such as program code.
+
+Enabling Paging
+
+[BITS 32]
+section.asm
+global paging_load_directory
+global enable_paging
+paging_load_directory:
+  push ebp
+  mov ebp, esp
+  mov eax, [ebp+8]
+  mov cr3, eax
+  pop ebp
+  ret
+enable_paging:
+  push ebp
+  mov ebp, esp
+  mov eax, cro
+  or eax, 0x80000000
+  mov cro, eax
+  pop ebp
+  ret
+
+  https://wiki.osdev.org/Paging
