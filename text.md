@@ -803,16 +803,63 @@ paging_load_directory:
   push ebp
   mov ebp, esp
   mov eax, [ebp+8]
-  mov cr3, eax
+  mov cr3, eax ; pass the address of the page directory to cr3 register which was passed to the function as an argument
   pop ebp
   ret
 enable_paging:
   push ebp
   mov ebp, esp
   mov eax, cro
-  or eax, 0x80000000
-  mov cro, eax
+  or eax, 0x80000000 ; set the paging bit in the cr0 register, changing the processor to paging mode
+  mov cro, eax ; pass the modified cr0 register back to the cr0 register
   pop ebp
   ret
 
   https://wiki.osdev.org/Paging
+
+
+can use paging to map address to some buffer in process memory, task switching, it can still write to video memory, but it's not writing to video memory, but is writing to buffer, when we switch back to process, we can copy all of the buffer to video memory, so, we can switch between processes without any flickering
+
+We can't map hardware addresses w/ paging, cuz request to hardware is not through memory, but through I/O ports of the processor, so, we can't map hardware addresses to some buffer in process memory
+
+What is a PCI IDE controller?
+• IDE refers to the electrical specification of cables which connect ATA drives to another device
+• IDE allows up to 4 drives to be connected
+1. ATA (Serial): Used for modern hard drives
+2. ATA (Parallel): Used for hard drives
+3. ATAPI(Serial): Used for modern optical drives
+4. ATAPI(Parallel): Commonly used for optical drives.
+• Kernel programmers do not have to care if the drive is serial or parallel.
+
+Possible Drive types
+• Primary master drive
+• Primary slave drive
+• Secondary master drive
+• Secondary slave drive
+
+ATA Read Example ![ATA Read Example for reading from the master drive](ATA_Read_Example.png)
+
+https://wiki.osdev.org/ATA_Command_Matrix
+
+The buffer in your GDB output contains raw binary data that was read from disk sector 0 using disk_read_sector(0, 1, buffer);
+Understanding the Buffer Contents
+First Few Bytes: \353\"\220
+
+These are raw bytes interpreted as characters. The ASCII characters \353, \", and \220 don't form readable text, meaning they likely represent machine code or some binary data.
+The first sector (sector 0) typically contains a boot sector if you're working with a bootable system.
+Series of '\000' (null bytes)
+
+The buffer contains many '\000' (null bytes), meaning parts of the sector are either empty or zero-initialized.
+Later Bytes Contain Machine Code
+
+Bytes like \352)|\000\000\372\270\000\000\216 look like x86 machine instructions.
+\352)|\000\000 (EIP jump instruction) suggests that this could be part of a bootloader or some low-level OS code.
+Patterns Suggesting BIOS Parameter Block (BPB)
+
+If this is a boot sector, it might contain a BIOS Parameter Block (BPB), which includes disk layout details.
+The last two bytes of a valid boot sector should be 0x55 0xAA. You can check:
+gdb
+Copy
+Edit
+x/2xb buffer+510
+If it prints 0x55 0xaa, it confirms that the sector contains a boot record.

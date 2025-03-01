@@ -2,6 +2,7 @@
 #include "heap.h"
 #include "../../config.h"
 #include "../../kernel.h"
+#include "../memory.h"
 
 Heap kernel_heap;
 HeapTable kernel_heap_table;
@@ -23,4 +24,12 @@ void* kmalloc(size_t size){
 
 void kfree(void* ptr){
     heap_free(&kernel_heap, ptr);
+}
+
+void* kzalloc(size_t size){
+    void* ptr = kmalloc(size);
+    if(ptr != NULL){
+        memset(ptr, 0x00, size);
+    }
+    return ptr;
 }
