@@ -1,7 +1,19 @@
 #include "../io/io.h"
 #include "disk.h"
+#include "../memory/memory.h"
+#include "../config.h"
+#include "../status.h"
 
 int disk_read_sector(int lba, int block_count, void *buffer);
+
+
+Disk disk;
+
+void disk_Search_and_init();
+
+Disk* disk_get_disk(int disk_number);
+
+int disk_read_block(Disk* idisk, unsigned int lba, int block_count, void* buffer);
 
 int disk_read_sector(int lba, int block_count, void *buffer) {
 
@@ -23,4 +35,26 @@ int disk_read_sector(int lba, int block_count, void *buffer) {
     }
 
     return 0;
+}
+
+// Disk disk;
+
+void disk_Search_and_init(){
+    memset(&disk, 0, sizeof(Disk));
+    disk.disk_type = OS_DISK_TYPE_REAL;
+    disk.sector_size = OS_SECTOR_SIZE;
+}
+
+Disk* disk_get_disk(int disk_number) {
+    if(disk_number == 0) {
+        return &disk;
+    }
+    return 0;
+}
+
+int disk_read_block(Disk* idisk, unsigned int lba, int block_count, void* buffer) {
+    if(idisk != &disk) {
+        return -EIO;
+    }
+    return disk_read_sector(lba, block_count, buffer);
 }

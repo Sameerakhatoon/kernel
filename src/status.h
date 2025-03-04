@@ -6,4 +6,6 @@
 #define EINVARG 2 // Invalid argument
 #define ENOMEM 3 // Out of memory
 
+#define EBADPATH 4 // Bad path
+
 #endif

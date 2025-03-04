@@ -863,3 +863,36 @@ Copy
 Edit
 x/2xb buffer+510
 If it prints 0x55 0xaa, it confirms that the sector contains a boot record.
+
+What is a filesystem?
+A FILESYSTEM IS A STRUCTURE THAT DESCRIBES HOW INFORMATION IS LAID ON A DISK
+DISKS ARE NOT AWARE OF FILES
+THE OPERATING SYSTEM KNOWS THE FILESYSTEM STRUCTURE SO KNOWS HOW TO READ FILES FROM THE DISK
+
+Disks
+• Hard disks can be thought of as just a giant array of information split into sectors.
+• Each sector can be read into memory and is given a LBA (Logical Block Address) number
+• Files do not exist on the disk.
+• Disks have no concept of files
+
+Filesystem structure
+• Contains raw data for files (remember the disk isn't aware of this)
+• Contains the filesystem structure header which can explain things such as how many files are on the disk, where the root directory is located and so on...
+• The way files are laid out on disk is different depending on the filesystem you are using for example "FAT16", "FAT32", "NTFS", and more...
+• Without filesystems we would be forced to read and write data through the use of sector numbers, structure would not exist and corruption would be likely.
+
+FAT16(File Allocation Table) 16 bits
+• The first sector in this filesystem format is the boot sector on a disk. Fields also exist in this first sector that describe the filesystem such as how many reserved sectors follow this sector.
+• Then follows the reserved sectors these are sectors ignored by the filesystem. There is a field in the boot sector that specifies how many reserved sectors there are. (Remember the operating system must ignore these its not automatic! The disk has no idea)
+• Now we have our first file allocation table, this table contains values that represent which clusters on the disk are taken and which are free. (A cluster is just a certain number of sectors joined together to represent one cluster)
+• Next comes our second file allocation table it's optional though and depends on the FAT6 header in the boot sector.
+• Now comes our root directory this explains what files/directories are in the root directory of the filesystem. Each entry has a relative name that represents the file or directory name, attributes such as read only, the address of the first cluster representing the data on the disk. And more...
+• Finally we have our data region, all the data is here.
+
+![fAT_directory_entry](fAT_directory_entry.png)
+
+What to take away from this
+• Disks don't understand files they are just giant flat arrays of bytes
+• Operating systems need filesystem drivers so they can read from the disk
+• Every filesystem is different
+• Without implementing a filesystem in your operating system you cannot have files

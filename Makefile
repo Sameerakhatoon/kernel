@@ -15,13 +15,15 @@ MEMORY_C_SRC := $(SRC_DIR)/memory/memory.c
 IO_C_SRC := $(SRC_DIR)/io/io.c
 IO_ASM_SRC := $(SRC_DIR)/io/io.asm
 HEAP_C_SRC := $(SRC_DIR)/memory/heap/heap.c
-HEAP_ASM_SRC := $(SRC_DIR)/memory/heap/heap.asm
 KERNEL_HEAP_C_SRC := $(SRC_DIR)/memory/heap/kernel_heap.c
-KERNEL_HEAP_ASM_SRC := $(SRC_DIR)/memory/heap/kernel_heap.asm
 PAGING_C_SRC := $(SRC_DIR)/paging/paging.c
 PAGING_ASM_SRC := $(SRC_DIR)/paging/paging.asm
 DISK_C_SRC := $(SRC_DIR)/disk/disk.c
 DISK_ASM_SRC := $(SRC_DIR)/disk/disk.asm
+FS_ASM_SRC := $(SRC_DIR)/fs/fs.asm
+FS_C_SRC := $(SRC_DIR)/fs/fs.c
+PATH_PARSER_C_SRC := $(SRC_DIR)/fs/path_parser.c
+STRING_C_SRC := $(SRC_DIR)/string/string.c
 
 # Object Files
 KERNEL_ASM_OBJ := $(BUILD_DIR)/kernel.asm.o
@@ -37,6 +39,12 @@ PAGING_C_OBJ := $(BUILD_DIR)/paging/paging.o
 PAGING_ASM_OBJ := $(BUILD_DIR)/paging/paging.asm.o
 DISK_C_OBJ := $(BUILD_DIR)/disk/disk.o
 DISK_ASM_OBJ := $(BUILD_DIR)/disk/disk.asm.o
+FS_ASM_OBJ := $(BUILD_DIR)/fs/fs.asm.o
+FS_C_OBJ := $(BUILD_DIR)/fs/fs.o
+PATH_PARSER_C_OBJ := $(BUILD_DIR)/fs/path_parser.o
+STRING_C_OBJ := $(BUILD_DIR)/string/string.o
+
+# Kernel & OS binaries
 KERNEL_FULL_OBJ := $(BUILD_DIR)/kernelfull.o
 KERNEL_BIN := $(BIN_DIR)/kernel.bin
 OS_BIN := $(BIN_DIR)/os.bin
@@ -53,11 +61,11 @@ GDB := gdb
 RM := rm -rf
 
 # Compiler Flags
-INCLUDES := -I$(SRC_DIR) -I$(SRC_DIR)/idt -I$(SRC_DIR)/memory -I$(SRC_DIR)/io -I$(SRC_DIR)/memory/heap -I$(SRC_DIR)/paging -I$(SRC_DIR)/disk
+INCLUDES := -I$(SRC_DIR) -I$(SRC_DIR)/idt -I$(SRC_DIR)/memory -I$(SRC_DIR)/io -I$(SRC_DIR)/memory/heap -I$(SRC_DIR)/paging -I$(SRC_DIR)/disk -I$(SRC_DIR)/fs -I$(SRC_DIR)/string
 FLAGS := -g -ffreestanding -Wall -O0 -nostdlib -nostartfiles -nodefaultlibs
 
 # Files to compile
-FILES := $(KERNEL_ASM_OBJ) $(KERNEL_C_OBJ) $(SERIAL_C_OBJ) $(IDT_ASM_OBJ) $(IDT_C_OBJ) $(MEMORY_C_OBJ) $(IO_ASM_OBJ) $(HEAP_C_OBJ) $(KERNEL_HEAP_C_OBJ) $(PAGING_C_OBJ) $(PAGING_ASM_OBJ) $(DISK_C_OBJ) $(DISK_ASM_OBJ)
+FILES := $(KERNEL_ASM_OBJ) $(KERNEL_C_OBJ) $(SERIAL_C_OBJ) $(IDT_ASM_OBJ) $(IDT_C_OBJ) $(MEMORY_C_OBJ) $(IO_ASM_OBJ) $(HEAP_C_OBJ) $(KERNEL_HEAP_C_OBJ) $(PAGING_C_OBJ) $(PAGING_ASM_OBJ) $(DISK_C_OBJ) $(DISK_ASM_OBJ) $(FS_ASM_OBJ) $(FS_C_OBJ) $(PATH_PARSER_C_OBJ) $(STRING_C_OBJ)
 
 # Default target
 all: $(OS_BIN)
@@ -138,6 +146,23 @@ $(DISK_ASM_OBJ): $(DISK_ASM_SRC)
 $(IO_ASM_OBJ): $(IO_ASM_SRC)
 	mkdir -p $(BUILD_DIR)/io
 	$(NASM) -f elf -g $< -o $@
+
+# Compile new source files
+$(FS_ASM_OBJ): $(FS_ASM_SRC)
+	mkdir -p $(BUILD_DIR)/fs
+	$(NASM) -f elf -g $< -o $@
+
+$(FS_C_OBJ): $(FS_C_SRC)
+	mkdir -p $(BUILD_DIR)/fs
+	$(GCC) $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
+
+$(PATH_PARSER_C_OBJ): $(PATH_PARSER_C_SRC)
+	mkdir -p $(BUILD_DIR)/fs
+	$(GCC) $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
+
+$(STRING_C_OBJ): $(STRING_C_SRC)
+	mkdir -p $(BUILD_DIR)/string
+	$(GCC) $(INCLUDES) $(FLAGS) -std=gnu99 -c $< -o $@
 
 # Link kernel objects
 $(KERNEL_BIN): $(FILES)

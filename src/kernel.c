@@ -4,7 +4,7 @@
 #include "memory/heap/kernel_heap.h"
 #include "paging/paging.h"
 #include "disk/disk.h"
-
+#include "fs/path_parser.h"
 
 extern void problem();
 extern void out_byte(unsigned short port, unsigned char data);
@@ -21,6 +21,10 @@ void main_kernel() {
     // Initialize the kernel heap
     init_kernel_heap();
 
+    // Initialize the disk
+    disk_Search_and_init();
+
+    // Initialize the IDT
     init_idt();
     // problem();
     // enable_interrupts();
@@ -63,12 +67,17 @@ void main_kernel() {
     // serial_write_string(ptr2);
     // serial_write_string(ptr);
 
-    char buffer[512];
-    disk_read_sector(0, 1, buffer);
-    serial_write_string(buffer);
+    // char buffer[512];
+    // disk_read_sector(0, 1, buffer);
+    // serial_write_string(buffer);
 
 
-    enable_interrupts();
+    // enable_interrupts();
+
+    PathRoot* root = path_parser_parse_path("0:/bin/shell.exe", NULL);
+    if(root){
+        
+    }
 }
 
 
