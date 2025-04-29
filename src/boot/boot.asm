@@ -5,11 +5,38 @@ BITS 16            ; Assemble the code for 16-bit mode
 CODE_SEG equ gdt_code - gdt_start ; Code segment offset
 DATA_SEG equ gdt_data - gdt_start ; Data segment offset
 
-_start:
-    jmp short start ; Jump to the "start" label to ensure execution begins correctly
-    nop            ; No operation, just padding
+jmp short start ; Jump to the "start" label to ensure execution begins correctly
+nop            ; No operation, just padding
 
-times 33 db 0     ; Reserve 33 bytes for the BIOS Parameter Block (BPB), which contains disk information
+; FAT16 Header
+OEMIdentifier db 'MYOS    '
+BytesPerSector dw 0x200
+SectorsPerCluster db 0x80
+ReservedSectors dw 200
+FATCopies db 0x02
+RootDirEntries dw 0x40
+NumSectors dw 0x00
+MediaType db 0xF8
+SectorsPerFat dw 0x100
+SectorsPerTrack dw 0x20
+NumberOfHeads dw 0x40
+HiddenSectors dd 0x00
+SectorsBig dd 0x773594
+
+; Extended BPB (Dos 4.0)
+DriveNumber db 0x80
+WinNTBit db 0x00
+Signature db 0x29
+VolumeID dd 0xD105
+VolumeIDString db 'MYOS BOOT..'
+SystemIDString db 'FAT16   '
+
+
+
+
+
+
+
 
 start:
     jmp 0x0000:next ; Set CS (Code Segment) to 0x0000 and jump to "next"

@@ -5,6 +5,7 @@
 #include "paging/paging.h"
 #include "disk/disk.h"
 #include "fs/path_parser.h"
+#include "disk/streamer.h"
 
 extern void problem();
 extern void out_byte(unsigned short port, unsigned char data);
@@ -74,10 +75,17 @@ void main_kernel() {
 
     // enable_interrupts();
 
-    PathRoot* root = path_parser_parse_path("0:/bin/shell.exe", NULL);
-    if(root){
+    // PathRoot* root = path_parser_parse_path("0:/bin/shell.exe", NULL);
+    // if(root){
         
-    }
+    // }
+
+    DiskStream* stream = diststreamer_new(0);
+    diskstreamer_seek(stream, 0x201);
+    unsigned char c = 0;
+    diskstreamer_read(stream, &c, 1);
+
+    while(1);
 }
 
 

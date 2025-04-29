@@ -10,6 +10,12 @@
 Boot Process
 - BIOS is stored in ROM
 - BIOS loads the boot loader from the boot sector of the disk in address 0x7c00 in case of x86
+- Boot sector is first 512 bytes of the disk or any bootable medium (like a hard drive, floppy disk, or USB stick).
+  - The very first 512 bytes of the storage device is called the Master Boot Record (MBR) on traditional BIOS-based systems.
+  - These 512 bytes are split into:
+  - Bootloader code (usually the first 446 bytes): Code that is executed by the BIOS at boot time.
+  - Partition table (next 64 bytes): Describes the layout (start/end addresses) of partitions on the disk.
+  - Boot signature (last 2 bytes, always 0x55AA): A magic number that tells the BIOS that the sector is bootable.
 - Boot loader loads the kernel into memory
 - Kernel initializes the hardware and starts the init process
 - Init process starts the user space processes
@@ -896,3 +902,243 @@ What to take away from this
 • Operating systems need filesystem drivers so they can read from the disk
 • Every filesystem is different
 • Without implementing a filesystem in your operating system you cannot have files
+
+
+testing streamer.c
+- byte 0x201 is B8 of os.bin
+
+
+FAT(FILE ALLOCATION TABLE)
+What is the file allocation table?
+- THE FILE ALLOCATION TABLE IS A FILESYSTEM DEVELOPED BY MICROSOFT
+- IT CONSISTS OF A SERIES OF CLUSTERS THAT HOLD DATA AND A TABLE THAT DETERMINES THE STATE OF A CLUSTER
+- THE BOOT SECTOR / BOOT LOADER STORES INFORMATION ABOUT THE FILESYSTEM
+
+FAT16 Filesystem
+• Uses clusters to represent data and subdirectories
+• Each cluster uses a fixed amount of sectors which is specified in the boot sector
+- Every file in FAT16 needs to use at least one cluster for its data this means a lot of storaage is wasted for small files.
+• FAT16 cannot store files larger than 2GB without large file support. With large file support 4GB is the maximum.
+
+DISK LAYOUT ![fat_disk_layout](fat_disk_layout.png)
+FAT16 Disk Layout
+We assume sector size of 512 bytes
+Name                  Size
+Boot sector           512 bytes
+Reserved Sectors      Fat_header.reserved_sectors * 512
+FATI                  Fat_headers.sectors_per_fat * 512
+FAT2 (Optional)       Fat_headers.sectors_per_fat * 512 //duplicate of FAT1
+Root Directory        Fat_header.root_dir_entries * sizeof(struct fat_directory_item) rounded to next sector if needed
+Data Clusters         X
+
+
+
+FAT16 Boot Sector
+
+jmp short _start
+пор
+
+; FAT16 header
+OEMIdentifier db 'COS32 ; 512 bytes per sector
+BytesPerSector dw 0x200
+SectorsPerCluster
+db 0x80
+ReservedSectors
+dw 200 ; the total size of reserved sectors is 200*512 = 102400 bytes, if the kernel exceeds size, the fat table will be corrupted by overwriting the fat table
+FATCopies
+db 0x02
+RootDirEntries
+dw 0x40
+NumSectors
+dw 0x0000
+MediaType
+db 0xF8
+Sectors PerFAT
+dw 0x0100
+SectorsPerTrack
+dw 0x20
+NumberOfHeads
+dw 0x40
+
+Reserved sectors before FAT (TODO: is this BOOT?)
+: Often this value is 2.
+64 Root directory entries
+If this value is 0, it means there are more than 65535 sectors in the vo
+Fixed disk -> Harddisk
+; Sectors used by each FAT Table
+TODO: Look up? BIOS might change those
+: Does this even matter?
+Hidden Sectors
+dd 0x00
+SectorsBig
+dd 0x773594
+: Extended BPB (DOS 4.0)
+DriveNumber
+db 0x80
+WinNTBit
+db 0x00
+: WinNT uses this
+Signature VolumeID
+db 0x29
+0 for removable, 0x80 for hard-drive
+; DOS 4.0 EBPB signature
+dd 0x00000105
+: Volume ID
+VolumeIDString
+SystemIDString
+db "COS32 BOOT"; Volume ID
+db "FAT16
+: File system type, pad with blanks to 8 bytes
+
+
+FAT16 File Allocation Table Explained
+
+o Each entry in the table is 2 bytes long and represents a cluster in the data clusters region that is available
+or taken.
+· Clusters can chain together, for example a file larger than one cluster will use two clusters. The value that
+represents the first cluster in the file allocation table will contain the value of the next cluster. The final
+cluster will contain a value of 0xffff signifying that there are no more clusters.
+o The size of a cluster is represented in the boot sector
+
+![FAT16 File Allocation Table Explained](fat.png)
+
+FAT16 Root Directory
+
+· Filesystems have directories/folders. FAT16 is no different
+. FAT16 has what's known as a root directory, this is the top most directory in the system
+o Directories contain directory entries of a fixed size.
+
+FAT16
+Directory Entry
+Attribute field contains flags
+that determine if this
+directory item is a file, or a
+directory. If it's read only
+and so on ...
+
+If the directory item
+represents a file, then the
+first cluster points to the start
+of the file data. If it's
+representing a directory,
+then its first cluster will point
+to a cluster that has
+directory entries.
+
+struct fat_directory_item
+{
+uint8 t filename[$];
+uint8_t ext[3];
+uint8 t attribute;
+uint8 t reserved;
+uint8_t creation_time_tenths_of_a_sec;
+uint16_t creation_time;
+uint16 t creation_date;
+uint16_t last_access;
+uint16_t high_16_bits_first_cluster;
+uint16_t last_mod_time;
+uint16 t last mod date;
+uint16_t low_16_bits_first_cluster;
+uint32 t filesize;
+}
+__attribute__ ((packed));
+
+Iterating through directories
+
+. In the boot sector contains the maximum number of root directory entries we should not exceed this
+value when iterating through the root directory.
+o We know when we have finished iterating through the root directory or a subdirectory because the first
+byte of the filename will be equal to zero
+
+Directory entry attribute flags
+
+0x01 - Read only
+0x02 - File hidden
+
+0x04 - System file do not move the clusters!
+
+0x08 - Volume label
+
+0x10- This is not a regular file it's a subdirectory (if this bit is not set then this directory entry represents a
+regular file)
+
+0x20 - Archived
+
+0x40 - Device
+
+0x80 - Reserved must not be changed by disk tools
+
+FAT16 Filename and extensions
+
+o The filename is 8 bytes wide and
+unused bytes are padded with spaces
+(0x20)
+o The extension is 3 bytes wide and
+unused bytes are padded with spaces
+(0x20)
+
+Clusters
+
+· Each cluster represents a certain amount of sectors linearly to each other.
+o The amount of sectors that represents a cluster is stored in the boot sector
+o The data clusters section in the filesystem contains all the clusters that make up the subdirectories and file
+data of files throughout the FAT filesystem.
+
+Useful tips
+
+Use "_attribute_((packed))" with all structures that are to be stored or read from disk. The C compiler
+can do clever optimization's on structures and this is not what we want when working with raw data the
+from disk. Setting the packed attribute ensures that never happens.
+o Pay close attention to the upcoming videos, things are about to get more difficult mistakes could
+happen
+· Be prepared to use a debugger such as GDB and attach debugging symbols as shown in previous
+lectures, you might need to debug if you run into issues.
+
+Step | What Happened
+sudo mount -t vfat bin/os.bin /mnt/d | Tell Linux: "Treat bin/os.bin like a disk and show it under /mnt/d"
+cd /mnt/d | You browsed inside the mounted filesystem
+touch hello.txt | You tried to create a file in that filesystem
+
+Understanding the VFS Layer
+
+THE VIRTUAL FILESYSTEM LAYER
+ALLOWS A KERNEL TO SUPPORT AN
+INFINITE AMOUNT OF FILESYSTEMS
+
+THE VIRTUAL FILESYSTEM LAYER
+ALLOWS US TO ABSTRACT OUT LOW-
+LEVEL FILESYSTEM CODE.
+
+ALLOWS FILESYSTEM FUNCTIONALITY
+TO BE LOADED OR UNLOADED TO
+THE KERNEL AT ANY TIME.
+
+Unlimited Filesystems
+
+o Filesystem drivers can be loaded or unloaded on demand
+· The programming interface to the filesystems remains the same for all filesystems
+
+What happens when a disk gets
+inserted?
+
+· We poll each filesystem and ask if the disk holds a filesystem it can manage
+o We call this resolving the filesystem
+. When a filesystem that can be used with the disk is found then the disk binds its self to its implementation.
+
+![communicatnBwUserAndFS](communicatnBwUserAndFS.png)
+
+fopen, kernel talks to correct fs, cuz kernel knows the correct fs, drive number is binded to disk, disk is binded to fs
+
+![fopenCommuncatn](fopenCommuncatn.png)
+
+the fopen function of fs is called, using fn pointers, this returns the file descriptor to the kernel, which is then returned to the user
+
+![freadCommuncatn](freadCommuncatn.png)
+
+fread of the fs is called w/ the buffer, # of bytes to be read, file decriptor, 
+
+Overview
+
+o The Virtual filesystem layer allows infinite amount of filesystems
+· All the filesystem functionality uses the same interface
+o The caller of file routines does not have to care about which filesystem to use

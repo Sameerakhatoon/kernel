@@ -15,4 +15,8 @@
 
 #define OS_SECTOR_SIZE 512
 
+#define OS_MAX_FILESYSTEMS 12
+
+#define OS_MAX_FILEDESCRIPTORS 512
+
 #endif
