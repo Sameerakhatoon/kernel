@@ -3,7 +3,7 @@
 #include "../memory/memory.h"
 #include "../status.h"
 #include "../memory/heap/kernel_heap.h"
-
+#include "./fat/fat16.h"
 
 FileSystem* filesystems[OS_MAX_FILESYSTEMS];
 FileDescriptor* file_descriptors[OS_MAX_FILEDESCRIPTORS];
@@ -28,7 +28,7 @@ void fs_insert_filesystem(FileSystem* fs) {
 }
 
 static void fs_static_load(){
-    // fs_insert_filesystem(fat16_init());
+    fs_insert_filesystem(fat16_init());
 }
 
 void fs_load(){

@@ -25,6 +25,7 @@ typedef struct Disk Disk;
 typedef void*(*FS_OPEN_FUNCTION)(Disk* disk, PathPart* path, FILE_MODE mode);
 typedef int(*FS_RESOLVE_FUNCTION)(Disk* disk);
 
+
 typedef struct FileSystem FileSystem;
 
 struct FileSystem{

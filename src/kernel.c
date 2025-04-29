@@ -6,6 +6,8 @@
 #include "disk/disk.h"
 #include "fs/path_parser.h"
 #include "disk/streamer.h"
+#include "string/string.h"
+#include "fs/file.h"
 
 extern void problem();
 extern void out_byte(unsigned short port, unsigned char data);
@@ -21,6 +23,9 @@ void main_kernel() {
 
     // Initialize the kernel heap
     init_kernel_heap();
+
+    //initiaize fs
+    fs_init();
 
     // Initialize the disk
     disk_Search_and_init();
@@ -80,10 +85,14 @@ void main_kernel() {
         
     // }
 
-    DiskStream* stream = diststreamer_new(0);
-    diskstreamer_seek(stream, 0x201);
-    unsigned char c = 0;
-    diskstreamer_read(stream, &c, 1);
+    // DiskStream* stream = diststreamer_new(0);
+    // diskstreamer_seek(stream, 0x201);
+    // unsigned char c = 0;
+    // diskstreamer_read(stream, &c, 1);
+
+    char buffer[10];
+    strcpy(buffer, "Hello");
+    serial_write_string(buffer);
 
     while(1);
 }
