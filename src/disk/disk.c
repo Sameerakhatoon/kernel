@@ -43,6 +43,7 @@ void disk_Search_and_init(){
     memset(&disk, 0, sizeof(Disk));
     disk.disk_type = OS_DISK_TYPE_REAL;
     disk.sector_size = OS_SECTOR_SIZE;
+    disk.id = 0; // Assuming a single disk for now
     disk.fs = fs_resolve(&disk);
 }
 

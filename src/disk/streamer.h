@@ -8,7 +8,7 @@ typedef struct DiskStream{
     Disk* disk;
 } DiskStream;
 
-DiskStream* diststreamer_new(int disk_id);
+DiskStream* diskstreamer_new(int disk_id);
 int diskstreamer_seek(DiskStream* stream, int position);
 
 int diskstreamer_read(DiskStream* stream, void* buffer, int size);

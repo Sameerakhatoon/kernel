@@ -2,7 +2,7 @@
 #include "../memory/heap/kernel_heap.h"
 #include "../config.h"
 
-DiskStream* diststreamer_new(int disk_id){
+DiskStream* diskstreamer_new(int disk_id){
     Disk* disk = disk_get_disk(disk_id);
     if(disk == NULL){
         return NULL;

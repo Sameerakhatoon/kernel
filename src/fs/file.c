@@ -4,6 +4,9 @@
 #include "../status.h"
 #include "../memory/heap/kernel_heap.h"
 #include "./fat/fat16.h"
+#include "path_parser.h"
+#include "../disk/disk.h"
+#include "../kernel.h"
 
 FileSystem* filesystems[OS_MAX_FILESYSTEMS];
 FileDescriptor* file_descriptors[OS_MAX_FILEDESCRIPTORS];
@@ -76,6 +79,64 @@ FileSystem* fs_resolve(Disk* disk) {
     return 0;
 }
 
-int fopen(const char* file_name, const char* mode){
-    return -EIO;
+FILE_MODE file_get_mode_by_string(const char* str);
+
+int fopen(const char* file_name, const char* mode_str){
+    int res = 0;
+    PathRoot* path_root = path_parser_parse_path(file_name, NULL);
+    if (path_root == 0) {
+        res = -EINVARG;
+        goto out;
+    }
+
+    if(!path_root->first){
+        res = -EINVARG;
+        goto out;
+    }
+
+    Disk* disk = disk_get_disk(path_root->drive_num);
+    if (disk == 0) {
+        res = -EIO;
+        goto out;
+    }
+    if(!disk->fs){
+        res = -EIO;
+        goto out;
+    }
+    FILE_MODE mode = file_get_mode_by_string(mode_str);
+    if (mode == FILE_MODE_INVALID) {
+        res = -EINVARG;
+        goto out;
+    }
+    void* descriptor_private_data = disk->fs->open(disk, path_root->first, mode);
+    if (ISERR(descriptor_private_data)) {
+        res = ERROR_I(descriptor_private_data);
+        goto out;
+    }
+    FileDescriptor* fd = 0;
+    res = file_new_descriptor(&fd);
+    if (res<0) {
+        goto out;
+    }
+    fd->fs = disk->fs;
+    fd->private_data = descriptor_private_data;
+    fd->disk = disk;
+    res = fd->index;
+out:
+    if(res<0){
+        res = 0;
+    }
+    return res;
+}
+
+FILE_MODE file_get_mode_by_string(const char* str){
+    FILE_MODE mode = FILE_MODE_INVALID;
+    if(strncmp(str, "r", 1) == 0){
+        mode = FILE_MODE_READ;
+    }else if(strncmp(str, "w", 1) == 0){
+        mode = FILE_MODE_WRITE;
+    }else if(strncmp(str, "a", 1) == 0){
+        mode = FILE_MODE_APPEND;
+    }
+    return mode;
 }

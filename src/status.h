@@ -8,4 +8,6 @@
 
 #define EBADPATH 4 // Bad path
 
+#define EFSNOTUS 5 // Filesystem not supported
+
 #endif

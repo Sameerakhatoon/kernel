@@ -14,6 +14,8 @@ struct Disk {
     OS_DISK_TYPE disk_type;
     int sector_size;
     FileSystem* fs;
+    int id; //disk id
+    void* fs_private; //private data for the filesystem
 };
 
 void disk_Search_and_init();

@@ -42,7 +42,7 @@ typedef struct FileDescriptor{
 } FileDescriptor;
 
 void fs_init();
-int fopen(const char* file_name, const char* mode);
+int fopen(const char* file_name, const char* mode_str);
 void fs_insert_filesystem(FileSystem* fs);
 FileSystem* fs_resolve(Disk* disk);
 
